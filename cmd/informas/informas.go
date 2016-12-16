@@ -2,8 +2,11 @@ package main
 
 import (
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/nathan-osman/informas/db"
+	"github.com/nathan-osman/informas/server"
 	"github.com/urfave/cli"
 )
 
@@ -46,18 +49,48 @@ func main() {
 		},
 	}
 	app.Before = func(c *cli.Context) error {
-		db.Connect(
+		return db.Connect(
 			c.String("db-name"),
 			c.String("db-user"),
 			c.String("db-password"),
 			c.String("db-host"),
 			c.Int("db-port"),
 		)
-		return nil
 	}
 	app.Commands = []cli.Command{
-		db.CreateUserCommand,
-		db.MigrateCommand,
+		cli.Command{
+			Name:  "migrate",
+			Usage: "perform all database migrations",
+			Action: func(c *cli.Context) {
+				if err := db.Migrate(); err != nil {
+					cli.HandleExitCoder(err)
+				}
+			},
+		},
+		cli.Command{
+			Name:  "run",
+			Usage: "launch the web UI",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "addr",
+					Value: ":80",
+					Usage: "address and port to listen on",
+				},
+			},
+			Action: func(c *cli.Context) {
+				s, err := server.New(c.String("addr"))
+				if err != nil {
+					cli.HandleExitCoder(err)
+				}
+				if err := s.Start(); err != nil {
+					cli.HandleExitCoder(err)
+				}
+				q := make(chan os.Signal)
+				signal.Notify(q, syscall.SIGINT)
+				<-q
+				s.Stop()
+			},
+		},
 	}
 	app.Run(os.Args)
 }

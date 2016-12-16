@@ -4,19 +4,15 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/Sirupsen/logrus"
 	_ "github.com/lib/pq"
 )
 
-var (
-	db  *sql.DB
-	log = logrus.WithField("context", "db")
-)
+var db *sql.DB
 
 // Connect establishes a connection to the PostgreSQL database used for all SQL
 // queries. This function should be called before using any other types or
 // functions in the package.
-func Connect(name, user, password, host string, port int) {
+func Connect(name, user, password, host string, port int) error {
 	d, err := sql.Open(
 		"postgres",
 		fmt.Sprintf(
@@ -29,7 +25,21 @@ func Connect(name, user, password, host string, port int) {
 		),
 	)
 	if err != nil {
-		log.Fatal(err.Error())
+		return err
 	}
 	db = d
+	return nil
+}
+
+// Migrate performs all database migrations.
+func Migrate() error {
+	tableMigrations := []func() error{
+		migrateUserTable,
+	}
+	for _, f := range tableMigrations {
+		if err := f(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
