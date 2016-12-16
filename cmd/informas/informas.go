@@ -19,6 +19,7 @@ func main() {
 		},
 	}
 	app.Commands = []cli.Command{
+		models.CreateUserCommand,
 		models.MigrateCommand,
 	}
 	app.Run(os.Args)

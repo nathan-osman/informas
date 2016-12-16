@@ -8,12 +8,12 @@ import (
 
 // User represents a registered user on the website.
 type User struct {
-	ID       int
-	Username string
-	Password string
-	Email    string
-	IsAdmin  bool
-	IsActive bool
+	ID         int
+	Username   string
+	Password   string
+	Email      string
+	IsAdmin    bool
+	IsDisabled bool
 }
 
 // migrateUserTable executes the SQL necessary to create the User table if it
@@ -23,11 +23,11 @@ func migrateUserTable() error {
 		`
         CREATE TABLE IF NOT EXISTS Users (
             ID SERIAL PRIMARY KEY,
-            Username VARCHAR(40) NOT NULL,
-            Password VARCHAR(80) NOT NULL,
-            Email    VARCHAR(100),
-            IsAdmin  BOOLEAN,
-            IsActive BOOLEAN
+            Username   VARCHAR(40) NOT NULL,
+            Password   VARCHAR(80) NOT NULL,
+            Email      VARCHAR(100),
+            IsAdmin    BOOLEAN,
+            IsDisabled BOOLEAN
         )
         `,
 	)
@@ -41,7 +41,7 @@ func GetUser(userID int) (*User, error) {
 	u := &User{}
 	err := db.QueryRow(
 		`
-        SELECT ID, Username, Password, Email, IsAdmin, IsActive
+        SELECT ID, Username, Password, Email, IsAdmin, IsDisabled
         FROM Users WHERE ID = ?
         `,
 		userID,
@@ -51,7 +51,7 @@ func GetUser(userID int) (*User, error) {
 		&u.Password,
 		&u.Email,
 		&u.IsAdmin,
-		&u.IsActive,
+		&u.IsDisabled,
 	)
 	if err != nil {
 		return nil, err
@@ -63,37 +63,34 @@ func GetUser(userID int) (*User, error) {
 // user is instead created and their ID set to 0.
 func (u *User) Save() error {
 	if u.ID == 0 {
-		r, err := db.Exec(
+		var id int
+		err := db.QueryRow(
 			`
-            INSERT INTO Users (Username, Password, Email, IsAdmin, IsActive)
-            VALUES (?, ?, ?, ?, ?);
+            INSERT INTO Users (Username, Password, Email, IsAdmin, IsDisabled)
+            VALUES ($1, $2, $3, $4, $5) RETURNING ID
             `,
 			u.Username,
 			u.Password,
 			u.Email,
 			u.IsAdmin,
-			u.IsActive,
-		)
+			u.IsDisabled,
+		).Scan(&id)
 		if err != nil {
 			return err
 		}
-		i, err := r.LastInsertId()
-		if err != nil {
-			return err
-		}
-		u.ID = int(i)
+		u.ID = id
 		return nil
 	} else {
 		_, err := db.Exec(
 			`
-            UPDATE Users SET Username=?, Password=?, Email=?, IsAdmin=?, IsActive=?
+            UPDATE Users SET Username=?, Password=?, Email=?, IsAdmin=?, IsDisabled=?
             WHERE ID = ?
             `,
 			u.Username,
 			u.Password,
 			u.Email,
 			u.IsAdmin,
-			u.IsActive,
+			u.IsDisabled,
 			u.ID,
 		)
 		return err
