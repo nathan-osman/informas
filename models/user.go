@@ -1,9 +1,9 @@
 package models
 
 import (
-	"golang.org/x/crypto/bcrypt"
-
 	"encoding/base64"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 // User represents a registered user on the website.
@@ -16,11 +16,12 @@ type User struct {
 	IsActive bool
 }
 
-// CreateUserTable executes the SQL necessary to create the User table.
-func CreateUserTable() error {
+// migrateUserTable executes the SQL necessary to create the User table if it
+// does not exist and perform all pending database migrations.
+func migrateUserTable() error {
 	_, err := db.Exec(
 		`
-        CREATE TABLE User (
+        CREATE TABLE IF NOT EXISTS Users (
             ID SERIAL PRIMARY KEY,
             Username VARCHAR(40) NOT NULL,
             Password VARCHAR(80) NOT NULL,
@@ -41,7 +42,7 @@ func GetUser(userID int) (*User, error) {
 	err := db.QueryRow(
 		`
         SELECT ID, Username, Password, Email, IsAdmin, IsActive
-        FROM User WHERE ID = ?
+        FROM Users WHERE ID = ?
         `,
 		userID,
 	).Scan(
@@ -64,7 +65,7 @@ func (u *User) Save() error {
 	if u.ID == 0 {
 		r, err := db.Exec(
 			`
-            INSERT INTO User (Username, Password, Email, IsAdmin, IsActive)
+            INSERT INTO Users (Username, Password, Email, IsAdmin, IsActive)
             VALUES (?, ?, ?, ?, ?);
             `,
 			u.Username,
@@ -85,7 +86,7 @@ func (u *User) Save() error {
 	} else {
 		_, err := db.Exec(
 			`
-            UPDATE User SET Username=?, Password=?, Email=?, IsAdmin=?, IsActive=?
+            UPDATE Users SET Username=?, Password=?, Email=?, IsAdmin=?, IsActive=?
             WHERE ID = ?
             `,
 			u.Username,
@@ -103,7 +104,7 @@ func (u *User) Save() error {
 func (u *User) Delete() error {
 	_, err := db.Exec(
 		`
-        DELETE FROM User WHERE ID = ?
+        DELETE FROM Users WHERE ID = ?
         `,
 		u.ID,
 	)
