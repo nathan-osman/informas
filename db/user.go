@@ -16,13 +16,12 @@ type User struct {
 	IsDisabled bool
 }
 
-// migrateUserTable executes the SQL necessary to create the User table if it
-// does not exist and perform all pending database migrations.
-func migrateUserTable() error {
+// migrateUsersTable executes the SQL necessary to create the Users table.
+func migrateUsersTable() error {
 	_, err := db.Exec(
 		`
         CREATE TABLE IF NOT EXISTS Users (
-            ID SERIAL PRIMARY KEY,
+            ID         SERIAL PRIMARY KEY,
             Username   VARCHAR(40) NOT NULL,
             Password   VARCHAR(80) NOT NULL,
             Email      VARCHAR(100),
@@ -42,7 +41,7 @@ func GetUser(userID int) (*User, error) {
 	err := db.QueryRow(
 		`
         SELECT ID, Username, Password, Email, IsAdmin, IsDisabled
-        FROM Users WHERE ID = ?
+        FROM Users WHERE ID = $1
         `,
 		userID,
 	).Scan(
@@ -83,8 +82,8 @@ func (u *User) Save() error {
 	} else {
 		_, err := db.Exec(
 			`
-            UPDATE Users SET Username=?, Password=?, Email=?, IsAdmin=?, IsDisabled=?
-            WHERE ID = ?
+            UPDATE Users SET Username=$1, Password=$2, Email=$3, IsAdmin=$4, IsDisabled=$5
+            WHERE ID = $6
             `,
 			u.Username,
 			u.Password,
@@ -101,7 +100,7 @@ func (u *User) Save() error {
 func (u *User) Delete() error {
 	_, err := db.Exec(
 		`
-        DELETE FROM Users WHERE ID = ?
+        DELETE FROM Users WHERE ID = $1
         `,
 		u.ID,
 	)
