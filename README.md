@@ -15,6 +15,10 @@ The only requirements for building the application are [Docker](https://www.dock
 
     make
 
-That's it &mdash; you can run the application with:
+That's it! You can then run the application with:
 
     dist/informas
+
+To create a container for running Informas in Docker, run the following command:
+
+    docker build -t <NAME> .
