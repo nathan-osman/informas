@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/gob"
 	"net/http"
 )
 
@@ -12,6 +13,10 @@ const (
 type alert struct {
 	Type string
 	Body string
+}
+
+func init() {
+	gob.Register(&alert{})
 }
 
 // addAlert stores the provided alert in the current session for retrieval when
