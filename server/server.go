@@ -34,12 +34,25 @@ func New(addr, dataDir string) (*Server, error) {
 		config:      c,
 		templateDir: path.Join(dataDir, "templates"),
 	}
-	s.server.Handler = s.mux
+	s.server.Handler = s
 	s.mux.HandleFunc("/", s.index)
+	s.mux.HandleFunc("/login", s.login)
 	s.mux.PathPrefix("/static").Handler(
 		http.FileServer(http.Dir(dataDir)),
 	)
 	return s, nil
+}
+
+// ServeHTTP performs some preliminary processing before handing the request
+// off to the router.
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		if err := r.ParseForm(); err != nil {
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+	}
+	s.mux.ServeHTTP(w, r)
 }
 
 // Start begins listening on the specified address.
