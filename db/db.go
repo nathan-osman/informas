@@ -34,6 +34,7 @@ func Connect(name, user, password, host string, port int) error {
 // Migrate performs all database migrations.
 func Migrate() error {
 	tableMigrations := []func() error{
+		migrateConfigTable,
 		migrateUsersTable,
 	}
 	for _, f := range tableMigrations {
