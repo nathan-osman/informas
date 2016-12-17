@@ -1,18 +1,22 @@
 CWD = $(shell pwd)
+PKG = github.com/nathan-osman/informas
 
 all: dist/informas
 
-dist/informas:
+dist/informas: cmd/ cmd/informas/ db/ dist/ server/ $(wildcard **/*.go)
 	docker run \
 	    --rm \
 	    -e CGO_ENABLED=0 \
-	    -v ${CWD}:/go/src/github.com/nathan-osman/informas \
+	    -v ${CWD}:/go/src/${PKG} \
 	    -v ${CWD}/dist:/go/bin \
-	    -w /go/src/github.com/nathan-osman/informas \
-	    golang:latest
+	    -w /go/src/${PKG} \
+	    golang:latest \
 	    go get ./...
 
+dist/:
+	@mkdir dist
+
 clean:
-	@rm dist/informas
+	@rm -rf dist
 
 .PHONY: clean
