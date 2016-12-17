@@ -15,7 +15,6 @@ const sessionName = "session"
 // Server provides the web interface for the application.
 type Server struct {
 	server      *server.AsyncServer
-	mux         *mux.Router
 	sessions    *sessions.CookieStore
 	config      *db.Config
 	templateDir string
@@ -27,32 +26,20 @@ func New(addr, dataDir string) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	m := mux.NewRouter()
 	s := &Server{
 		server:      server.New(addr),
-		mux:         mux.NewRouter(),
 		sessions:    sessions.NewCookieStore([]byte(c.Get(configSecretKey))),
 		config:      c,
 		templateDir: path.Join(dataDir, "templates"),
 	}
-	s.server.Handler = s
-	s.mux.HandleFunc("/", s.index)
-	s.mux.HandleFunc("/login", s.login)
-	s.mux.PathPrefix("/static").Handler(
+	s.server.Handler = m
+	m.HandleFunc("/", s.view(accessRegistered, s.index))
+	m.HandleFunc("/login", s.view(accessPublic, s.login))
+	m.PathPrefix("/static").Handler(
 		http.FileServer(http.Dir(dataDir)),
 	)
 	return s, nil
-}
-
-// ServeHTTP performs some preliminary processing before handing the request
-// off to the router.
-func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
-		if err := r.ParseForm(); err != nil {
-			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-			return
-		}
-	}
-	s.mux.ServeHTTP(w, r)
 }
 
 // Start begins listening on the specified address.

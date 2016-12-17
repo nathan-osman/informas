@@ -20,11 +20,14 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			s.addAlert(w, r, alertDanger, "invalid username")
 		} else {
-			//...
 			if err := u.Authenticate(password); err != nil {
 				s.addAlert(w, r, alertDanger, "invalid password")
 			} else {
+				session, _ := s.sessions.Get(r, sessionName)
+				session.Values[sessionUserID] = u.ID
+				session.Save(r, w)
 				http.Redirect(w, r, "/", http.StatusFound)
+				return
 			}
 		}
 	}
