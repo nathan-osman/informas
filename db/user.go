@@ -33,17 +33,16 @@ func migrateUsersTable() error {
 	return err
 }
 
-// GetUser retrieves a User object from the database that matches the given
-// user ID. If the ID does not match any users, ErrUserDoesNotExist is
-// returned.
-func GetUser(userID int) (*User, error) {
+// FindUser attempts to retrieve a user using the specified field.
+func FindUser(field string, value interface{}) (*User, error) {
 	u := &User{}
 	err := db.QueryRow(
 		`
         SELECT ID, Username, Password, Email, IsAdmin, IsDisabled
-        FROM Users WHERE ID = $1
+        FROM Users WHERE $1 = $2
         `,
-		userID,
+		field,
+		value,
 	).Scan(
 		&u.ID,
 		&u.Username,
