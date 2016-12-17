@@ -3,7 +3,7 @@ PKG = github.com/nathan-osman/informas
 
 all: dist/informas
 
-dist/informas: cmd/ cmd/informas/ db/ dist/ server/ $(wildcard **/*.go)
+dist/informas: dist
 	docker run \
 	    --rm \
 	    -e CGO_ENABLED=0 \
@@ -13,7 +13,7 @@ dist/informas: cmd/ cmd/informas/ db/ dist/ server/ $(wildcard **/*.go)
 	    golang:latest \
 	    go get ./...
 
-dist/:
+dist:
 	@mkdir dist
 
 clean:

@@ -73,7 +73,7 @@ func main() {
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "http-addr",
-					Value: ":80",
+					Value: ":8000",
 					Usage: "address and port to listen on",
 				},
 				cli.StringFlag{
