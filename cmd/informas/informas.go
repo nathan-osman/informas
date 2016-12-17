@@ -72,13 +72,21 @@ func main() {
 			Usage: "launch the web UI",
 			Flags: []cli.Flag{
 				cli.StringFlag{
-					Name:  "addr",
+					Name:  "http-addr",
 					Value: ":80",
 					Usage: "address and port to listen on",
 				},
+				cli.StringFlag{
+					Name:  "data-dir",
+					Value: "data",
+					Usage: "path to data directory",
+				},
 			},
 			Action: func(c *cli.Context) {
-				s, err := server.New(c.String("addr"))
+				s, err := server.New(
+					c.String("http-addr"),
+					c.String("data-dir"),
+				)
 				if err != nil {
 					cli.HandleExitCoder(err)
 				}
