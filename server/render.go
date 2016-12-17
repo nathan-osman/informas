@@ -7,6 +7,8 @@ import (
 	"github.com/flosch/pongo2"
 )
 
+const contextAlerts = "alerts"
+
 // render loads the specified template, injects the provided context, and
 // renders it directly to the response.
 func (s *Server) render(w http.ResponseWriter, r *http.Request, templateName string, ctx pongo2.Context) {
@@ -15,7 +17,7 @@ func (s *Server) render(w http.ResponseWriter, r *http.Request, templateName str
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	// TODO: add context variables
+	ctx[contextAlerts] = s.getAlerts(w, r)
 	b, err := t.ExecuteBytes(ctx)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
