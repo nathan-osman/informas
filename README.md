@@ -9,6 +9,12 @@ Want to enable multiple users to tweet from a group of Twitter accounts without 
 - Queue tweets for sending at a later date
 - Hold tweets for administrator approval
 
-### Installation
+### Building
 
-TODO
+The only requirements for building the application are [Docker](https://www.docker.com/) and `make`. In the directory that contains the source code, run the following command:
+
+    make
+
+That's it &mdash; you can run the application with:
+
+    dist/informas
