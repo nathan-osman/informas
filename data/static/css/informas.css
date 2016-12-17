@@ -3,6 +3,12 @@
  * Copyright 2016 - Nathan Osman
  */
 
+footer {
+    background-color: #f7f7f9;
+    margin: 2rem 0;
+    padding: 3rem 0;
+}
+
 .navbar {
     margin-bottom: 1rem;
 }
