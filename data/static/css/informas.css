@@ -12,3 +12,8 @@ footer {
 .navbar {
     margin-bottom: 1rem;
 }
+
+/* Ensure the page is never wider than 750px. */
+@media (min-width: 768px) {
+    .container { max-width: 750px; }
+}
