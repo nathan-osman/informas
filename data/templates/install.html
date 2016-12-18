@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Install</h1>
+    <p class="lead">
+        In order to complete installation, please fill in the form below.
+    </p>
+    <div class="row">
+        <div class="col-sm-6">
+            <form method="post">
+                <div class="form-group">
+                    <label for="username">Administrator username</label>
+                    <input type="text" name="admin_username" class="form-control" value="{{ admin_username }}">
+                </div>
+                <div class="form-group">
+                    <label for="username">Administrator password</label>
+                    <input type="password" name="admin_password" class="form-control" value="{{ admin_password }}">
+                </div>
+                <div class="form-group">
+                    <label for="username">Administrator email</label>
+                    <input type="text" name="admin_email" class="form-control" value="{{ admin_email }}">
+                </div>
+                <button type="submit" class="btn btn-outline-primary">Install</button>
+            </form>
+        </div>
+    </div>
+{% endblock %}

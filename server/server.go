@@ -26,13 +26,6 @@ func New(addr, dataDir string) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	m := mux.NewRouter()
-	s := &Server{
-		server:      server.New(addr),
-		sessions:    sessions.NewCookieStore([]byte(c.Get(configSecretKey))),
-		config:      c,
-		templateDir: path.Join(dataDir, "templates"),
-	}
 	var (
 		m = mux.NewRouter()
 		s = &Server{
@@ -48,6 +41,10 @@ func New(addr, dataDir string) (*Server, error) {
 	m.PathPrefix("/static").Handler(
 		http.FileServer(http.Dir(dataDir)),
 	)
+	// Add the installer if app is not configured yet
+	if c.GetInt(configInstalled) == 0 {
+		m.HandleFunc("/install", s.view(accessPublic, s.install))
+	}
 	return s, nil
 }
 
