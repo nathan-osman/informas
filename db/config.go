@@ -1,6 +1,7 @@
 package db
 
 import (
+	"strconv"
 	"sync"
 )
 
@@ -49,17 +50,27 @@ func NewConfig() (*Config, error) {
 	return c, nil
 }
 
-// Get retrieves the value for the configuration entry with the specified key.
-// An empty string is returned if the value does not exist.
-func (c *Config) Get(key string) string {
+// GetString retrieves the string value for the configuration entry with the
+// specified key.
+func (c *Config) GetString(key string) string {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 	v, _ := c.values[key]
 	return v
 }
 
-// Set stores a new value for the specified key.
-func (c *Config) Set(key, value string) error {
+// GetInt retrieves the integer value for the configuration entry with the
+// specified key.
+func (c *Config) GetInt(key string) int {
+	v, err := strconv.Atoi(c.GetString(key))
+	if err != nil {
+		return 0
+	}
+	return v
+}
+
+// SetString stores a new string value for the specified key.
+func (c *Config) SetString(key, value string) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	_, err := db.Exec(
@@ -75,4 +86,9 @@ func (c *Config) Set(key, value string) error {
 	}
 	c.values[key] = value
 	return nil
+}
+
+// SetInt stores a new integer value for the specified key.
+func (c *Config) SetInt(key string, value int) error {
+	return c.SetString(key, strconv.Itoa(value))
 }

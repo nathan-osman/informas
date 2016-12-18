@@ -33,6 +33,15 @@ func New(addr, dataDir string) (*Server, error) {
 		config:      c,
 		templateDir: path.Join(dataDir, "templates"),
 	}
+	var (
+		m = mux.NewRouter()
+		s = &Server{
+			server:      server.New(addr),
+			sessions:    sessions.NewCookieStore([]byte(c.GetString(configSecretKey))),
+			config:      c,
+			templateDir: path.Join(dataDir, "templates"),
+		}
+	)
 	s.server.Handler = m
 	m.HandleFunc("/", s.view(accessRegistered, s.index))
 	m.HandleFunc("/login", s.view(accessPublic, s.login))
