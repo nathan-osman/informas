@@ -31,16 +31,35 @@ func Connect(name, user, password, host string, port int) error {
 	return nil
 }
 
+// Transaction begins a new transaction and passes it to the provided callback.
+// If no error is returned, Commit() is invoked - otherwise, Rollback(). The
+// error is returned.
+func Transaction(f func(*Token) error) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	t := &Token{tx: tx}
+	if err := f(t); err != nil {
+		t.tx.Rollback()
+		return err
+	}
+	t.tx.Commit()
+	return nil
+}
+
 // Migrate performs all database migrations.
 func Migrate() error {
-	tableMigrations := []func() error{
+	tableMigrations := []func(*Token) error{
 		migrateConfigTable,
 		migrateUsersTable,
 	}
-	for _, f := range tableMigrations {
-		if err := f(); err != nil {
-			return err
+	return Transaction(func(t *Token) error {
+		for _, f := range tableMigrations {
+			if err := f(t); err != nil {
+				return err
+			}
 		}
-	}
-	return nil
+		return nil
+	})
 }

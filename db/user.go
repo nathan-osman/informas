@@ -17,8 +17,8 @@ type User struct {
 }
 
 // migrateUsersTable executes the SQL necessary to create the Users table.
-func migrateUsersTable() error {
-	_, err := db.Exec(
+func migrateUsersTable(t *Token) error {
+	_, err := t.exec(
 		`
         CREATE TABLE IF NOT EXISTS Users (
             ID         SERIAL PRIMARY KEY,
@@ -34,9 +34,9 @@ func migrateUsersTable() error {
 }
 
 // FindUser attempts to retrieve a user using the specified field.
-func FindUser(field string, value interface{}) (*User, error) {
+func FindUser(t *Token, field string, value interface{}) (*User, error) {
 	u := &User{}
-	err := db.QueryRow(
+	err := t.queryRow(
 		`
         SELECT ID, Username, Password, Email, IsAdmin, IsDisabled
         FROM Users WHERE $1 = $2
@@ -59,10 +59,10 @@ func FindUser(field string, value interface{}) (*User, error) {
 
 // Save updates the object in the database. If the user ID is set to 0, a new
 // user is instead created and their ID set to 0.
-func (u *User) Save() error {
+func (u *User) Save(t *Token) error {
 	if u.ID == 0 {
 		var id int
-		err := db.QueryRow(
+		err := t.queryRow(
 			`
             INSERT INTO Users (Username, Password, Email, IsAdmin, IsDisabled)
             VALUES ($1, $2, $3, $4, $5) RETURNING ID
@@ -79,7 +79,7 @@ func (u *User) Save() error {
 		u.ID = id
 		return nil
 	} else {
-		_, err := db.Exec(
+		_, err := t.exec(
 			`
             UPDATE Users SET Username=$1, Password=$2, Email=$3, IsAdmin=$4, IsDisabled=$5
             WHERE ID = $6
@@ -96,8 +96,8 @@ func (u *User) Save() error {
 }
 
 // Delete completely destroys the user and all data associated with them.
-func (u *User) Delete() error {
-	_, err := db.Exec(
+func (u *User) Delete(t *Token) error {
+	_, err := t.exec(
 		`
         DELETE FROM Users WHERE ID = $1
         `,

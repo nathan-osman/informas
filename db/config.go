@@ -15,8 +15,8 @@ type Config struct {
 }
 
 // migrateConfigTable executes the SQL necessary to create the Config table.
-func migrateConfigTable() error {
-	_, err := db.Exec(
+func migrateConfigTable(t *Token) error {
+	_, err := t.exec(
 		`
         CREATE TABLE IF NOT EXISTS Config (
             Key   VARCHAR(20) PRIMARY KEY,
@@ -28,11 +28,11 @@ func migrateConfigTable() error {
 }
 
 // NewConfig loads the configuration from the database.
-func NewConfig() (*Config, error) {
+func NewConfig(t *Token) (*Config, error) {
 	c := &Config{
 		values: make(map[string]string),
 	}
-	r, err := db.Query(`SELECT Key, Value FROM Config`)
+	r, err := t.query(`SELECT Key, Value FROM Config`)
 	if err != nil {
 		return nil, err
 	}
@@ -70,10 +70,10 @@ func (c *Config) GetInt(key string) int {
 }
 
 // SetString stores a new string value for the specified key.
-func (c *Config) SetString(key, value string) error {
+func (c *Config) SetString(t *Token, key, value string) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-	_, err := db.Exec(
+	_, err := t.exec(
 		`
         UPDATE Config SET Value=$1
         WHERE Key = $2
@@ -89,6 +89,6 @@ func (c *Config) SetString(key, value string) error {
 }
 
 // SetInt stores a new integer value for the specified key.
-func (c *Config) SetInt(key string, value int) error {
-	return c.SetString(key, strconv.Itoa(value))
+func (c *Config) SetInt(t *Token, key string, value int) error {
+	return c.SetString(t, key, strconv.Itoa(value))
 }
