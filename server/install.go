@@ -20,24 +20,29 @@ func (s *Server) install(w http.ResponseWriter, r *http.Request) {
 		adminEmail    string
 	)
 	if r.Method == http.MethodPost {
-		adminUsername = r.Form.Get("admin_username")
-		adminPassword = r.Form.Get("admin_password")
-		adminEmail = r.Form.Get("admin_email")
-		u := &db.User{
-			Username: adminUsername,
-			Email:    adminEmail,
-			IsAdmin:  true,
-		}
-		if err := u.SetPassword(adminPassword); err != nil {
+		err := db.Transaction(func(t *db.Token) error {
+			adminUsername = r.Form.Get("admin_username")
+			adminPassword = r.Form.Get("admin_password")
+			adminEmail = r.Form.Get("admin_email")
+			u := &db.User{
+				Username: adminUsername,
+				Email:    adminEmail,
+				IsAdmin:  true,
+			}
+			if err := u.SetPassword(adminPassword); err != nil {
+				return err
+			}
+			if err := u.Save(t); err != nil {
+				return err
+			}
+			s.addAlert(w, r, alertInfo, "installation complete")
+			http.Redirect(w, r, "/login", http.StatusFound)
+			return nil
+		})
+		if err != nil {
 			s.addAlert(w, r, alertDanger, err.Error())
 		} else {
-			if err := u.Save(); err != nil {
-				s.addAlert(w, r, alertDanger, err.Error())
-			} else {
-				s.addAlert(w, r, alertInfo, "installation complete")
-				http.Redirect(w, r, "/login", http.StatusFound)
-				return
-			}
+			return
 		}
 	}
 	s.render(w, r, "install.html", pongo2.Context{

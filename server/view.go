@@ -18,31 +18,38 @@ const (
 
 const contextUser = "user"
 
-// view ensures that some basic sanity checks are run before processing the
-// request. This includes permission checks and form pre-processing.
-func (s *Server) view(a access, fn http.HandlerFunc) http.HandlerFunc {
+// view wraps each of the individual view functions. It takes care of such
+// things as authentication, form processing, errors, etc.
+func (s *Server) view(a access, f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+
+		// Check for a user session and add it to the context if one exists
 		var user *db.User
 		session, _ := s.sessions.Get(r, sessionName)
 		if v, ok := session.Values[sessionUserID]; ok {
-			u, err := db.FindUser("ID", v.(int))
+			u, err := db.FindUser(&db.Token{}, "ID", v.(int))
 			if err == nil {
 				user = u
 			}
 		}
 		context.Set(r, contextUser, user)
-		if a != accessPublic && user == nil ||
-			a == accessRegistered && !user.IsAdmin {
+
+		// Confirm that the user has permission to access the view
+		if a != accessPublic && user == nil || a == accessRegistered && !user.IsAdmin {
 			s.addAlert(w, r, alertDanger, "page requires authorization")
 			http.Redirect(w, r, "/login", http.StatusFound)
 			return
 		}
+
+		// For POST requests, parse the form
 		if r.Method == http.MethodPost {
 			if err := r.ParseForm(); err != nil {
 				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 				return
 			}
 		}
-		fn(w, r)
+
+		// Execute the view
+		f(w, r)
 	}
 }

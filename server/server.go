@@ -22,15 +22,16 @@ type Server struct {
 
 // New creates a new server instance.
 func New(addr, dataDir string) (*Server, error) {
-	c, err := db.NewConfig()
+	c, err := db.NewConfig(&db.Token{})
 	if err != nil {
 		return nil, err
 	}
 	var (
+		h = []byte(c.GetString(configSecretKey))
 		m = mux.NewRouter()
 		s = &Server{
 			server:      server.New(addr),
-			sessions:    sessions.NewCookieStore([]byte(c.GetString(configSecretKey))),
+			sessions:    sessions.NewCookieStore(h),
 			config:      c,
 			templateDir: path.Join(dataDir, "templates"),
 		}
