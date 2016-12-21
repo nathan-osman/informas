@@ -22,7 +22,7 @@ func migrateUsersTable(t *Token) error {
 		`
         CREATE TABLE IF NOT EXISTS Users (
             ID         SERIAL PRIMARY KEY,
-            Username   VARCHAR(40) NOT NULL,
+            Username   VARCHAR(40) NOT NULL UNIQUE,
             Password   VARCHAR(80) NOT NULL,
             Email      VARCHAR(100),
             IsAdmin    BOOLEAN,
