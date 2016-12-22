@@ -2,6 +2,7 @@ package db
 
 import (
 	"encoding/base64"
+	"fmt"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -37,11 +38,13 @@ func migrateUsersTable(t *Token) error {
 func FindUser(t *Token, field string, value interface{}) (*User, error) {
 	u := &User{}
 	err := t.queryRow(
-		`
-        SELECT ID, Username, Password, Email, IsAdmin, IsDisabled
-        FROM Users WHERE $1 = $2
-        `,
-		field,
+		fmt.Sprintf(
+			`
+            SELECT ID, Username, Password, Email, IsAdmin, IsDisabled
+            FROM Users WHERE %s = $1
+            `,
+			field,
+		),
 		value,
 	).Scan(
 		&u.ID,
