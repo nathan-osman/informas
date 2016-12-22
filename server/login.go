@@ -25,6 +25,9 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 			if err := u.Authenticate(password); err != nil {
 				return errors.New("invalid password")
 			}
+			if u.IsDisabled {
+				return errors.New("disabled account")
+			}
 			session, _ := s.sessions.Get(r, sessionName)
 			session.Values[sessionUserID] = u.ID
 			session.Save(r, w)
