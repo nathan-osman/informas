@@ -75,8 +75,11 @@ func (c *Config) SetString(t *Token, key, value string) error {
 	defer c.mutex.Unlock()
 	_, err := t.exec(
 		`
-        UPDATE Config SET Value=$1
-        WHERE Key = $2
+		INSERT INTO Config (Key, Value)
+		VALUES ($1, $2)
+		ON CONFLICT (Key)
+		DO UPDATE SET Value=$1
+        WHERE Config.Key = $2
         `,
 		key,
 		value,

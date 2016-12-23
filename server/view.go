@@ -23,6 +23,12 @@ const contextUser = "user"
 func (s *Server) view(a access, f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
+		// Always redirect to the installer if not installed
+		if s.config.GetInt(configInstalled) == 0 && r.RequestURI != "/install" {
+			http.Redirect(w, r, "/install", http.StatusFound)
+			return
+		}
+
 		// Check for a user session and add it to the context if one exists
 		var user *db.User
 		session, _ := s.sessions.Get(r, sessionName)

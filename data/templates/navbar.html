@@ -1,10 +1,10 @@
 <nav class="navbar navbar-full navbar-dark bg-inverse">
     <div class="container">
         <a class="navbar-brand" href="/">Informas</a>
-        <div class="nav navbar-nav">
-            <!--
-            <a class="nav-item nav-link" href="#">Features</a>
-            -->
+        <div class="nav navbar-nav float-xs-right">
+            {% if user.ID %}
+                <a class="nav-item nav-link" href="/logout">Logout</a>
+            {% endif %}
         </div>
     </div>
 </nav>

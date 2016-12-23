@@ -47,58 +47,56 @@ func main() {
 			Value: 5432,
 			Usage: "PostgreSQL database port",
 		},
+		cli.StringFlag{
+			Name:  "http-addr",
+			Value: ":8000",
+			Usage: "address and port to listen on",
+		},
+		cli.StringFlag{
+			Name:  "data-dir",
+			Value: "data",
+			Usage: "path to data directory",
+		},
 	}
-	app.Before = func(c *cli.Context) error {
-		return db.Connect(
+	app.Action = func(c *cli.Context) {
+
+		// Connect to the database
+		if err := db.Connect(
 			c.String("db-name"),
 			c.String("db-user"),
 			c.String("db-password"),
 			c.String("db-host"),
 			c.Int("db-port"),
+		); err != nil {
+			cli.HandleExitCoder(err)
+		}
+
+		// Perform all pending migrations
+		if err := db.Migrate(); err != nil {
+			cli.HandleExitCoder(err)
+		}
+
+		// Create the server
+		s, err := server.New(
+			c.String("http-addr"),
+			c.String("data-dir"),
 		)
-	}
-	app.Commands = []cli.Command{
-		cli.Command{
-			Name:  "migrate",
-			Usage: "perform all database migrations",
-			Action: func(c *cli.Context) {
-				if err := db.Migrate(); err != nil {
-					cli.HandleExitCoder(err)
-				}
-			},
-		},
-		cli.Command{
-			Name:  "run",
-			Usage: "launch the web UI",
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:  "http-addr",
-					Value: ":8000",
-					Usage: "address and port to listen on",
-				},
-				cli.StringFlag{
-					Name:  "data-dir",
-					Value: "data",
-					Usage: "path to data directory",
-				},
-			},
-			Action: func(c *cli.Context) {
-				s, err := server.New(
-					c.String("http-addr"),
-					c.String("data-dir"),
-				)
-				if err != nil {
-					cli.HandleExitCoder(err)
-				}
-				if err := s.Start(); err != nil {
-					cli.HandleExitCoder(err)
-				}
-				q := make(chan os.Signal)
-				signal.Notify(q, syscall.SIGINT)
-				<-q
-				s.Stop()
-			},
-		},
+		if err != nil {
+			cli.HandleExitCoder(err)
+		}
+
+		// Start the server
+		if err := s.Start(); err != nil {
+			cli.HandleExitCoder(err)
+		}
+
+		// Wait for SIGINT
+		q := make(chan os.Signal)
+		signal.Notify(q, syscall.SIGINT)
+		<-q
+
+		// Shut everything down
+		s.Stop()
 	}
 	app.Run(os.Args)
 }

@@ -5,9 +5,9 @@ import (
 	"path"
 
 	"github.com/flosch/pongo2"
+	"github.com/gorilla/context"
+	"github.com/nathan-osman/informas/db"
 )
-
-const contextAlerts = "alerts"
 
 // render loads the specified template, injects the provided context, and
 // renders it directly to the response.
@@ -17,7 +17,9 @@ func (s *Server) render(w http.ResponseWriter, r *http.Request, templateName str
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	ctx[contextAlerts] = s.getAlerts(w, r)
+	ctx["request"] = r
+	ctx["alerts"] = s.getAlerts(w, r)
+	ctx["user"] = context.Get(r, contextUser).(*db.User)
 	b, err := t.ExecuteBytes(ctx)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
