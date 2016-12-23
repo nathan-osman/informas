@@ -9,6 +9,10 @@ footer {
     padding: 3rem 0;
 }
 
+.fa {
+    margin-right: 4px;
+}
+
 .navbar {
     margin-bottom: 1rem;
 }
