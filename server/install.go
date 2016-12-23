@@ -1,20 +1,19 @@
 package server
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/flosch/pongo2"
 	"github.com/nathan-osman/informas/db"
 )
 
-const (
-	configInstalled = "installed"
-	configSiteTitle = "site_title"
-)
-
-// install is used to initialize the application.
+// install is used to initialize the application. It is only available before
+// the installation process is completed.
 func (s *Server) install(w http.ResponseWriter, r *http.Request) {
+	if s.config.GetInt(configInstalled) != 0 {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
 	var (
 		adminUsername string = "admin"
 		adminPassword string
@@ -22,14 +21,9 @@ func (s *Server) install(w http.ResponseWriter, r *http.Request) {
 	)
 	if r.Method == http.MethodPost {
 		err := db.Transaction(func(t *db.Token) error {
-
-			// Do a basic sanity check on the form input
 			adminUsername = r.Form.Get("admin_username")
 			adminPassword = r.Form.Get("admin_password")
 			adminEmail = r.Form.Get("admin_email")
-			if adminUsername == "" || adminPassword == "" || adminEmail == "" {
-				return errors.New("all fields are required")
-			}
 
 			// Create the initial admin
 			u := &db.User{
@@ -55,7 +49,6 @@ func (s *Server) install(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
-			// Indicate success
 			s.addAlert(w, r, alertInfo, "installation complete")
 			http.Redirect(w, r, "/login", http.StatusFound)
 			return nil
