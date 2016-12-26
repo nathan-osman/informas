@@ -34,6 +34,36 @@ func migrateUsersTable(t *Token) error {
 	return err
 }
 
+// AllUsers retrieves all registered users.
+func AllUsers(t *Token, sort string) ([]*User, error) {
+	r, err := t.query(
+		`
+        SELECT ID, Username, Password, Email, IsAdmin, IsDisabled
+        FROM Users ORDER BY $1
+        `,
+		sort,
+	)
+	if err != nil {
+		return nil, err
+	}
+	users := make([]*User, 0, 1)
+	for r.Next() {
+		u := &User{}
+		if err := r.Scan(
+			&u.ID,
+			&u.Username,
+			&u.Password,
+			&u.Email,
+			&u.IsAdmin,
+			&u.IsDisabled,
+		); err != nil {
+			return nil, err
+		}
+		users = append(users, u)
+	}
+	return users, nil
+}
+
 // FindUser attempts to retrieve a user using the specified field.
 func FindUser(t *Token, field string, value interface{}) (*User, error) {
 	u := &User{}

@@ -20,6 +20,7 @@ func (s *Server) render(w http.ResponseWriter, r *http.Request, templateName str
 	ctx["request"] = r
 	ctx["alerts"] = s.getAlerts(w, r)
 	ctx["user"] = context.Get(r, contextUser).(*db.User)
+	ctx["site_title"] = s.config.GetString(configSiteTitle)
 	b, err := t.ExecuteBytes(ctx)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

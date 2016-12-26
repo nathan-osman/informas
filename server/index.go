@@ -8,5 +8,7 @@ import (
 
 // index displays the home page.
 func (s *Server) index(w http.ResponseWriter, r *http.Request) {
-	s.render(w, r, "index.html", pongo2.Context{})
+	s.render(w, r, "index.html", pongo2.Context{
+		"title": "Dashboard",
+	})
 }

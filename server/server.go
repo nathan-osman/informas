@@ -38,9 +38,14 @@ func New(addr, dataDir string) (*Server, error) {
 	)
 	s.server.Handler = m
 	m.HandleFunc("/", s.view(accessRegistered, s.index))
+	m.HandleFunc("/accounts", s.view(accessAdmin, s.accountsIndex))
+	m.HandleFunc("/accounts/new", s.view(accessAdmin, s.accountsNew))
 	m.HandleFunc("/install", s.view(accessPublic, s.install))
-	m.HandleFunc("/login", s.view(accessPublic, s.login))
-	m.HandleFunc("/logout", s.view(accessRegistered, s.logout))
+	m.HandleFunc("/users", s.view(accessAdmin, s.usersIndex))
+	m.HandleFunc("/users/{id:[0-9]+}", s.view(accessRegistered, s.usersId))
+	m.HandleFunc("/users/{id:[0-9]+}/delete", s.view(accessAdmin, s.usersIdDelete))
+	m.HandleFunc("/users/login", s.view(accessPublic, s.usersLogin))
+	m.HandleFunc("/users/logout", s.view(accessRegistered, s.usersLogout))
 	m.PathPrefix("/static").Handler(
 		http.FileServer(http.Dir(dataDir)),
 	)

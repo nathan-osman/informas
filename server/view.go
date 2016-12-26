@@ -16,7 +16,10 @@ const (
 	accessAdmin
 )
 
-const contextUser = "user"
+const (
+	contextSiteTitle = "site_title"
+	contextUser      = "user"
+)
 
 // view wraps each of the individual view functions. It takes care of such
 // things as authentication, form processing, errors, etc.
@@ -29,7 +32,7 @@ func (s *Server) view(a access, f http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		// Check for a user session and add it to the context if one exists
+		// Check for a user session
 		var user *db.User
 		session, _ := s.sessions.Get(r, sessionName)
 		if v, ok := session.Values[sessionUserID]; ok {
@@ -43,7 +46,7 @@ func (s *Server) view(a access, f http.HandlerFunc) http.HandlerFunc {
 		// Confirm that the user has permission to access the view
 		if a != accessPublic && user == nil || a == accessRegistered && !user.IsAdmin {
 			s.addAlert(w, r, alertDanger, "page requires authorization")
-			http.Redirect(w, r, "/login", http.StatusFound)
+			http.Redirect(w, r, "/users/login", http.StatusFound)
 			return
 		}
 

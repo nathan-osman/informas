@@ -8,8 +8,30 @@ import (
 	"github.com/nathan-osman/informas/db"
 )
 
-// login presents the login form.
-func (s *Server) login(w http.ResponseWriter, r *http.Request) {
+const (
+	sessionUserID = "user_id"
+)
+
+func (s *Server) usersIndex(w http.ResponseWriter, r *http.Request) {
+	u, err := db.AllUsers(&db.Token{}, "Username")
+	if err != nil {
+		s.addAlert(w, r, alertDanger, err.Error())
+	}
+	s.render(w, r, "usersIndex.html", pongo2.Context{
+		"title": "Users",
+		"users": u,
+	})
+}
+
+func (s *Server) usersId(w http.ResponseWriter, r *http.Request) {
+	//...
+}
+
+func (s *Server) usersIdDelete(w http.ResponseWriter, r *http.Request) {
+	//...
+}
+
+func (s *Server) usersLogin(w http.ResponseWriter, r *http.Request) {
 	var (
 		username string
 		password string
@@ -40,8 +62,17 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	s.render(w, r, "login.html", pongo2.Context{
+	s.render(w, r, "usersLogin.html", pongo2.Context{
+		"title":    "Login",
 		"username": username,
 		"password": password,
 	})
+}
+
+func (s *Server) usersLogout(w http.ResponseWriter, r *http.Request) {
+	session, _ := s.sessions.Get(r, sessionName)
+	delete(session.Values, sessionUserID)
+	session.Save(r, w)
+	s.addAlert(w, r, alertInfo, "you have been logged out")
+	http.Redirect(w, r, "/users/login", http.StatusFound)
 }
