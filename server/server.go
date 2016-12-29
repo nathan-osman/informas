@@ -46,12 +46,13 @@ func New(addr, dataDir string) (*Server, error) {
 	m.HandleFunc("/accounts", s.view(accessAdmin, s.accountsIndex))
 	m.HandleFunc("/accounts/new", s.view(accessAdmin, s.accountsNew))
 	m.HandleFunc("/install", s.view(accessPublic, s.install))
+	m.HandleFunc("/settings", s.view(accessAdmin, s.settings))
 	m.HandleFunc("/users", s.view(accessAdmin, s.usersIndex))
 	m.HandleFunc("/users/create", s.view(accessAdmin, s.usersCreate))
-	m.HandleFunc("/users/{id:[0-9]+}/edit", s.view(accessRegistered, s.usersIdEdit))
-	m.HandleFunc("/users/{id:[0-9]+}/delete", s.view(accessAdmin, s.usersIdDelete))
 	m.HandleFunc("/users/login", s.view(accessPublic, s.usersLogin))
 	m.HandleFunc("/users/logout", s.view(accessRegistered, s.usersLogout))
+	m.HandleFunc("/users/{id:[0-9]+}/edit", s.view(accessRegistered, s.usersIdEdit))
+	m.HandleFunc("/users/{id:[0-9]+}/delete", s.view(accessAdmin, s.usersIdDelete))
 	m.PathPrefix("/static").Handler(
 		http.FileServer(http.Dir(dataDir)),
 	)
