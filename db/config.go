@@ -1,6 +1,7 @@
 package db
 
 import (
+	"encoding/base64"
 	"strconv"
 	"sync"
 )
@@ -59,6 +60,16 @@ func (c *Config) GetString(key string) string {
 	return v
 }
 
+// GetBytes retrieves the raw byte value for the configuration entry with the
+// specified key.
+func (c *Config) GetBytes(key string) []byte {
+	b, err := base64.StdEncoding.DecodeString(c.GetString(key))
+	if err != nil {
+		return []byte{}
+	}
+	return b
+}
+
 // GetInt retrieves the integer value for the configuration entry with the
 // specified key.
 func (c *Config) GetInt(key string) int {
@@ -89,6 +100,11 @@ func (c *Config) SetString(t *Token, key, value string) error {
 	}
 	c.values[key] = value
 	return nil
+}
+
+// SetBytes stores a byte array for the specified key.
+func (c *Config) SetBytes(t *Token, key string, value []byte) error {
+	return c.SetString(t, key, base64.StdEncoding.EncodeToString(value))
 }
 
 // SetInt stores a new integer value for the specified key.

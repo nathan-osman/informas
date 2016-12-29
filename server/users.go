@@ -5,11 +5,9 @@ import (
 	"net/http"
 
 	"github.com/flosch/pongo2"
+	"github.com/gorilla/context"
+	"github.com/gorilla/mux"
 	"github.com/nathan-osman/informas/db"
-)
-
-const (
-	sessionUserID = "user_id"
 )
 
 func (s *Server) usersIndex(w http.ResponseWriter, r *http.Request) {
@@ -23,8 +21,79 @@ func (s *Server) usersIndex(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (s *Server) usersId(w http.ResponseWriter, r *http.Request) {
-	//...
+// usersCreateOrEdit enables both new user accounts to be created and existing
+// user accounts to be modified. Certain fields are only editable by
+// administrators.
+func (s *Server) usersCreateOrEdit(w http.ResponseWriter, r *http.Request, title, action string) {
+	var (
+		currentUser = context.Get(r, contextCurrentUser).(*db.User)
+		user        = &db.User{}
+		userID      = atoi(mux.Vars(r)["id"])
+		password    = r.Form.Get("password")
+		password2   = r.Form.Get("password2")
+	)
+	if !currentUser.IsAdmin && currentUser.ID != userID {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
+	err := db.Transaction(func(t *db.Token) error {
+		if action == "edit" {
+			u, err := db.FindUser(t, "ID", userID)
+			if err != nil {
+				return errors.New("invalid user")
+			}
+			user = u
+		}
+		if r.Method == http.MethodPost {
+			if action == "edit" {
+				if len(password) != 0 {
+					if password != password2 {
+						return errors.New("passwords do not match")
+					}
+					if err := user.SetPassword(password); err != nil {
+						return errors.New("unable to set password")
+					}
+				}
+			}
+			user.Username = r.Form.Get("username")
+			user.Email = r.Form.Get("email")
+			if currentUser.IsAdmin {
+				user.IsAdmin = len(r.Form.Get("is_admin")) != 0
+				user.IsDisabled = len(r.Form.Get("is_disabled")) != 0
+			}
+			if err := user.Save(t); err != nil {
+				return errors.New("unable to save user")
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		s.addAlert(w, r, alertDanger, err.Error())
+	} else if r.Method == http.MethodPost {
+		s.addAlert(w, r, alertInfo, "user account saved")
+		if currentUser.IsAdmin {
+			http.Redirect(w, r, "/users", http.StatusFound)
+		} else {
+			http.Redirect(w, r, "/", http.StatusFound)
+		}
+		return
+	}
+	s.render(w, r, "usersCreateOrEdit.html", pongo2.Context{
+		"title":     title,
+		"action":    action,
+		"user":      user,
+		"password":  password,
+		"password2": password2,
+	})
+}
+
+func (s *Server) usersCreate(w http.ResponseWriter, r *http.Request) {
+	s.usersCreateOrEdit(w, r, "Create User", "create")
+}
+
+// usersIdEdit allows existing users to be modified.
+func (s *Server) usersIdEdit(w http.ResponseWriter, r *http.Request) {
+	s.usersCreateOrEdit(w, r, "Edit User", "edit")
 }
 
 func (s *Server) usersIdDelete(w http.ResponseWriter, r *http.Request) {

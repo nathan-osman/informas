@@ -49,13 +49,13 @@ func (s *Server) install(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
-			s.addAlert(w, r, alertInfo, "installation complete")
-			http.Redirect(w, r, "/login", http.StatusFound)
 			return nil
 		})
 		if err != nil {
 			s.addAlert(w, r, alertDanger, err.Error())
 		} else {
+			s.addAlert(w, r, alertInfo, "installation complete")
+			http.Redirect(w, r, "/users/login", http.StatusFound)
 			return
 		}
 	}

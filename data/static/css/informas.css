@@ -13,8 +13,16 @@ footer {
     margin-right: 4px;
 }
 
+.form-check-input {
+    margin-right: 4px;
+}
+
 .navbar {
     margin-bottom: 1rem;
+}
+
+.table-outline {
+    border: 1px solid #eceeef;
 }
 
 /* Ensure the page is never wider than 750px. */

@@ -5,13 +5,17 @@ import (
 	"net/http"
 )
 
+// alertType determines what type of alert is shown.
+type alertType string
+
 const (
-	alertInfo   = "info"
-	alertDanger = "danger"
+	alertInfo   alertType = "info"
+	alertDanger alertType = "danger"
 )
 
+// alert is a message displayed to a user on the next page render.
 type alert struct {
-	Type string
+	Type alertType
 	Body string
 }
 
@@ -21,11 +25,11 @@ func init() {
 
 // addAlert stores the provided alert in the current session for retrieval when
 // the next page is rendered.
-func (s *Server) addAlert(w http.ResponseWriter, r *http.Request, alertType, body string) {
+func (s *Server) addAlert(w http.ResponseWriter, r *http.Request, type_ alertType, body string) {
 	session, _ := s.sessions.Get(r, sessionName)
 	defer session.Save(r, w)
 	session.AddFlash(&alert{
-		Type: alertType,
+		Type: type_,
 		Body: body,
 	})
 }

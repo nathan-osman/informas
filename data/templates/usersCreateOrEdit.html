@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>{{ title }}</h1>
+    <p class="lead">
+        Use the form below to {{ action }} a user account.
+    </p>
+    <p>
+        {% if action == "create" %}
+            The user will receive an email with instructions for setting up their account.
+        {% elif action == "edit" %}
+            Leave the password fields blank to keep the existing password.
+        {% endif %}
+    </p>
+    <div class="row">
+        <div class="col-sm-6">
+            <form method="post">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" name="username" class="form-control" value="{{ user.Username }}">
+                </div>
+                {% if action == "edit" %}
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" name="password" class="form-control" value="{{ password }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="password2">Confirm password</label>
+                        <input type="password" name="password2" class="form-control" value="{{ password2 }}">
+                    </div>
+                {% endif %}
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" name="email" class="form-control" value="{{ user.Email }}">
+                </div>
+                {% if current_user.IsAdmin %}
+                    <div class="form-group">
+                        <label class="form-check-label">
+                            <input type="checkbox" name="is_admin" class="form-check-input"{% if user.IsAdmin %} checked{% endif %}>
+                            Is an administrator
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-check-label">
+                            <input type="checkbox" name="is_disabled" class="form-check-input"{% if user.IsDisabled %} checked{% endif %}>
+                            Is disabled
+                        </label>
+                    </div>
+                {% endif %}
+                <button type="submit" class="btn btn-outline-primary">Save</button>
+            </form>
+        </div>
+    </div>
+{% endblock %}

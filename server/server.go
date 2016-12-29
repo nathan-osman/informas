@@ -5,12 +5,11 @@ import (
 	"path"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"github.com/hectane/go-asyncserver"
 	"github.com/nathan-osman/informas/db"
 )
-
-const sessionName = "session"
 
 // Server provides the web interface for the application.
 type Server struct {
@@ -26,12 +25,18 @@ func New(addr, dataDir string) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	secretKey := c.GetBytes(configSecretKey)
+	if len(secretKey) == 0 {
+		secretKey = securecookie.GenerateRandomKey(32)
+		if err := c.SetBytes(&db.Token{}, configSecretKey, secretKey); err != nil {
+			return nil, err
+		}
+	}
 	var (
-		h = []byte(c.GetString(configSecretKey))
 		m = mux.NewRouter()
 		s = &Server{
 			server:      server.New(addr),
-			sessions:    sessions.NewCookieStore(h),
+			sessions:    sessions.NewCookieStore(secretKey),
 			config:      c,
 			templateDir: path.Join(dataDir, "templates"),
 		}
@@ -42,7 +47,8 @@ func New(addr, dataDir string) (*Server, error) {
 	m.HandleFunc("/accounts/new", s.view(accessAdmin, s.accountsNew))
 	m.HandleFunc("/install", s.view(accessPublic, s.install))
 	m.HandleFunc("/users", s.view(accessAdmin, s.usersIndex))
-	m.HandleFunc("/users/{id:[0-9]+}", s.view(accessRegistered, s.usersId))
+	m.HandleFunc("/users/create", s.view(accessAdmin, s.usersCreate))
+	m.HandleFunc("/users/{id:[0-9]+}/edit", s.view(accessRegistered, s.usersIdEdit))
 	m.HandleFunc("/users/{id:[0-9]+}/delete", s.view(accessAdmin, s.usersIdDelete))
 	m.HandleFunc("/users/login", s.view(accessPublic, s.usersLogin))
 	m.HandleFunc("/users/logout", s.view(accessRegistered, s.usersLogout))
