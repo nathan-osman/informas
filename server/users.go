@@ -10,6 +10,7 @@ import (
 	"github.com/nathan-osman/informas/db"
 )
 
+// usersIndex displays a list of all registered users.
 func (s *Server) usersIndex(w http.ResponseWriter, r *http.Request) {
 	u, err := db.AllUsers(&db.Token{}, "Username")
 	if err != nil {
@@ -87,6 +88,7 @@ func (s *Server) usersCreateOrEdit(w http.ResponseWriter, r *http.Request, title
 	})
 }
 
+// usersCreate allows new users to be created.
 func (s *Server) usersCreate(w http.ResponseWriter, r *http.Request) {
 	s.usersCreateOrEdit(w, r, "Create User", "create")
 }
@@ -96,10 +98,36 @@ func (s *Server) usersIdEdit(w http.ResponseWriter, r *http.Request) {
 	s.usersCreateOrEdit(w, r, "Edit User", "edit")
 }
 
+// usersIdDelete allows users to be deleted.
 func (s *Server) usersIdDelete(w http.ResponseWriter, r *http.Request) {
-	//...
+	var user *db.User
+	err := db.Transaction(func(t *db.Token) error {
+		u, err := db.FindUser(t, "ID", atoi(mux.Vars(r)["id"]))
+		if err != nil {
+			return err
+		}
+		user = u
+		if r.Method == http.MethodPost {
+			if err := u.Delete(t); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		s.addAlert(w, r, alertDanger, err.Error())
+	} else if r.Method == http.MethodPost {
+		s.addAlert(w, r, alertInfo, "user deleted")
+		http.Redirect(w, r, "/users", http.StatusFound)
+		return
+	}
+	s.render(w, r, "usersDelete.html", pongo2.Context{
+		"title": "Delete User",
+		"user":  user,
+	})
 }
 
+// usersLogin facilitates authentication.
 func (s *Server) usersLogin(w http.ResponseWriter, r *http.Request) {
 	var (
 		username string
@@ -138,6 +166,7 @@ func (s *Server) usersLogin(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// usersLogout ends a user's current session.
 func (s *Server) usersLogout(w http.ResponseWriter, r *http.Request) {
 	session, _ := s.sessions.Get(r, sessionName)
 	delete(session.Values, sessionUserID)

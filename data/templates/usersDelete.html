@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Delete User</h1>
+    <p class="lead">
+        You are about to delete a user.
+    </p>
+    <p>
+        Are you sure you wish to delete user {{ user.Username }}?
+    </p>
+    <div class="row">
+        <div class="col-sm-6">
+            <form method="post">
+                <button type="submit" class="btn btn-outline-danger">Confirm</button>
+            </form>
+        </div>
+    </div>
+{% endblock %}
