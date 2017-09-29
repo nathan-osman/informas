@@ -14,10 +14,12 @@ RESOURCES = $(shell find server/static server/templates)
 all: dist/${CMD}
 
 # Build the Informas standalone executable
-dist/${CMD}: ${SOURCES} server/ab0x.go | cache/lib cache/src dist
+dist/${CMD}: ${SOURCES} server/ab0x.go | cache/lib cache/src/${PKG} dist
 	@docker run \
 	    --rm \
 	    -e CGO_ENABLED=0 \
+	    -e GOARCH=${GOARCH} \
+	    -e GOOS=${GOOS} \
 	    -u ${UID}:${GID} \
 	    -v ${CWD}/cache/lib:/go/lib \
 	    -v ${CWD}/cache/src:/go/src \
@@ -31,7 +33,7 @@ server/ab0x.go: dist/fileb0x b0x.yaml
 	@dist/fileb0x b0x.yaml
 
 # Create the fileb0x executable needed for embedding files
-dist/fileb0x: | cache/lib cache/src dist
+dist/fileb0x: | cache/lib cache/src/${PKG} dist
 	@docker run \
 	    --rm \
 	    -e CGO_ENABLED=0 \
@@ -45,8 +47,8 @@ dist/fileb0x: | cache/lib cache/src dist
 cache/lib:
 	@mkdir -p cache/lib
 
-cache/src:
-	@mkdir -p cache/src
+cache/src/${PKG}:
+	@mkdir -p cache/src/${PKG}
 
 dist:
 	@mkdir dist
