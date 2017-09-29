@@ -1,22 +1,57 @@
-CWD = $(shell pwd)
 PKG = github.com/nathan-osman/informas
+CMD = informas
 
-all: dist/informas
+CWD = $(shell pwd)
+UID = $(shell id -u)
+GID = $(shell id -g)
 
-dist/informas: dist
-	docker run \
+# Find all Go source files (excluding the cache path)
+SOURCES = $(shell find -type f -name '*.go' ! -path './cache/*')
+
+# Find all resources (static files and templates)
+RESOURCES = $(shell find server/static server/templates)
+
+all: dist/${CMD}
+
+# Build the Informas standalone executable
+dist/${CMD}: ${SOURCES} server/ab0x.go | cache/lib cache/src dist
+	@docker run \
 	    --rm \
 	    -e CGO_ENABLED=0 \
-	    -v ${CWD}:/go/src/${PKG} \
+	    -u ${UID}:${GID} \
+	    -v ${CWD}/cache/lib:/go/lib \
+	    -v ${CWD}/cache/src:/go/src \
 	    -v ${CWD}/dist:/go/bin \
-	    -w /go/src/${PKG} \
+	    -v ${CWD}:/go/src/${PKG} \
 	    golang:latest \
-	    go get ./...
+	    go get -pkgdir /go/lib ${PKG}/cmd/${CMD}
+
+# Create a Go source file with the static files and templates
+server/ab0x.go: dist/fileb0x b0x.yaml
+	@dist/fileb0x b0x.yaml
+
+# Create the fileb0x executable needed for embedding files
+dist/fileb0x: | cache/lib cache/src dist
+	@docker run \
+	    --rm \
+	    -e CGO_ENABLED=0 \
+	    -u ${UID}:${GID} \
+	    -v ${CWD}/cache/lib:/go/lib \
+	    -v ${CWD}/cache/src:/go/src \
+	    -v ${CWD}/dist:/go/bin \
+	    golang:latest \
+	    go get -pkgdir /go/lib github.com/UnnoTed/fileb0x
+
+cache/lib:
+	@mkdir -p cache/lib
+
+cache/src:
+	@mkdir -p cache/src
 
 dist:
 	@mkdir dist
 
 clean:
-	@rm -rf dist
+	@rm -rf cache dist server/ab0x.go
 
 .PHONY: clean

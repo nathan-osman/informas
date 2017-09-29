@@ -1,16 +1,11 @@
 FROM scratch
 MAINTAINER Nathan Osman <nathan@quickmediasolutions.com>
 
-# Add the binary and data files
+# Add the executable
 ADD dist/informas /usr/local/bin/
-ADD data /usr/local/share/informas/data
 
-# Expose port 8000 by default
-EXPOSE 8000
+# Add the root CAs
+ADD https://curl.haxx.se/ca/cacert.pem /etc/ssl/certs/
 
-# The default command simply runs the binary
-CMD [ \
-    "informas", \
-    "run", \
-    "--data-dir", "/usr/local/share/informas/data" \
-]
+# Set the entrypoint for the container
+ENTRYPOINT ["/usr/local/bin/informas"]
